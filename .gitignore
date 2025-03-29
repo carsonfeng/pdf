@@ -37,6 +37,10 @@ instance/
 # User-uploaded files
 app/uploads/
 
+# Log files
+logs/
+*.log
+
 # Environment variables
 .env
 .env.*
