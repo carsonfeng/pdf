@@ -45,10 +45,11 @@ def setup_logger():
 # 初始化日志记录器
 stat_logger = None
 
-@bp.before_app_first_request
+@bp.before_app_request
 def initialize_logger():
     global stat_logger
-    stat_logger = setup_logger()
+    if stat_logger is None:
+        stat_logger = setup_logger()
 
 def get_client_info():
     """获取客户端信息"""

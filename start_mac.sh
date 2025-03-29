@@ -21,6 +21,4 @@ mkdir -p logs
 echo "启动应用..."
 export FLASK_APP=run.py
 export FLASK_ENV=development
-flask run --host=0.0.0.0 --port=5001
-
-certbot --nginx --dry-run -d pdf.carsonfeng.cn % 
+flask run --host=0.0.0.0 --port=5001 
