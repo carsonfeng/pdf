@@ -69,8 +69,17 @@ body {
     padding: 2rem;
 }
 
-body.dark-mode {
-    background-color: var(--bg-color);
+/* 暗黑模式具体元素样式覆盖 - 新增 */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6,
+body.dark-mode p,
+body.dark-mode label,
+body.dark-mode div,
+body.dark-mode span {
     color: var(--text-color);
 }
 
@@ -79,6 +88,11 @@ body.dark-mode .card-header {
     background-color: var(--card-bg);
     color: var(--text-color);
     border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .conversion-option {
+    color: var(--text-color);
+    background-color: var(--card-bg);
 }
 
 body.dark-mode .format-card:hover {
