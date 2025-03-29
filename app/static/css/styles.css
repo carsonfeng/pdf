@@ -1,23 +1,72 @@
 /* 暗色模式变量和样式 */
 :root {
-    --primary-color: #4a6bdf;
-    --primary-hover: #3a5bce;
+    --primary-color: #5677FC;
+    --primary-hover: #4A66D9;
     --bg-color: #f8f9fa;
     --card-bg: #ffffff;
     --text-color: #333333;
     --border-color: rgba(0, 0, 0, 0.1);
-    --highlight-bg: rgba(74, 107, 223, 0.05);
+    --highlight-bg: rgba(86, 119, 252, 0.05);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --shadow-hover: rgba(0, 0, 0, 0.12);
+    --secondary-color: #8E9AFB;
+    --success-color: #4CAF50;
 }
 
 /* 暗色模式 */
 body.dark-mode {
-    --primary-color: #5d7ce4;
-    --primary-hover: #4a6bdf;
-    --bg-color: #212529;
-    --card-bg: #2c3034;
-    --text-color: #f8f9fa;
+    --primary-color: #5D8BFF;
+    --primary-hover: #4A7AEE;
+    --bg-color: #121212;
+    --card-bg: #1E1E1E;
+    --text-color: #E0E0E0;
     --border-color: rgba(255, 255, 255, 0.1);
-    --highlight-bg: rgba(93, 124, 228, 0.15);
+    --highlight-bg: rgba(93, 139, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --shadow-hover: rgba(0, 0, 0, 0.3);
+    --secondary-color: #7986CB;
+    --success-color: #66BB6A;
+}
+
+/* 全局样式 */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    padding: 20px;
+}
+
+/* 卡片样式 */
+.card {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 8px 20px var(--shadow-color);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    margin-bottom: 2rem;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px var(--shadow-hover);
+}
+
+.card-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem;
+}
+
+.card-body {
+    padding: 2rem;
 }
 
 body.dark-mode {
@@ -82,7 +131,7 @@ body.dark-mode .feature-box {
 }
 
 .animate-fade-in {
-    animation: fadeIn 0.6s ease-in-out;
+    animation: fadeIn 0.6s ease;
 }
 
 @keyframes fadeIn {
@@ -160,46 +209,301 @@ body.dark-mode .feature-box:hover {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 20px;
-    margin: 30px 0;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
 }
 
 .conversion-option {
     flex: 1;
-    min-width: 120px;
-    text-align: center;
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    transition: all 0.2s;
+    min-width: 130px;
+    max-width: 200px;
+    background-color: var(--card-bg);
+    padding: 1.5rem 1rem;
+    border-radius: 14px;
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.02);
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    position: relative;
+    overflow: hidden;
 }
 
-body.dark-mode .conversion-option {
-    background-color: rgba(255, 255, 255, 0.03);
+.conversion-option:before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: radial-gradient(circle at center, var(--highlight-bg), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 0;
 }
 
-.conversion-option:hover,
+.conversion-option:hover:before {
+    opacity: 1;
+}
+
+.conversion-option:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px var(--shadow-hover);
+}
+
 .conversion-option.selected {
     border-color: var(--primary-color);
     background-color: var(--highlight-bg);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(86, 119, 252, 0.2);
 }
 
 .conversion-option i {
-    font-size: 32px;
+    font-size: 3rem;
+    margin-bottom: 1rem;
     color: var(--primary-color);
-    margin-bottom: 10px;
-    display: block;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.conversion-option:hover i {
+    transform: scale(1.1);
+}
+
+/* 进度条 */
+.progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(86, 119, 252, 0.1);
+    overflow: hidden;
+    margin: 1.5rem 0;
+}
+
+.progress-bar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    transition: width 0.5s ease;
+}
+
+/* 文件信息 */
+#file-info {
+    animation: fadeIn 0.5s ease;
+}
+
+#file-info .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(86, 119, 252, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(86, 119, 252, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(86, 119, 252, 0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease;
 }
 
 /* 页面底部装饰 */
 footer {
-    opacity: 0.8;
-    transition: opacity 0.3s;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
 }
 
 footer:hover {
+    opacity: 1;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 10px rgba(86, 119, 252, 0.3);
+    transition: all 0.25s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(135deg, var(--primary-hover), var(--secondary-color));
+    box-shadow: 0 6px 15px rgba(86, 119, 252, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    color: var(--text-color);
+    border-color: var(--border-color);
+    border-radius: 12px;
+    padding: 0.6rem 1.2rem;
+    transition: all 0.25s ease;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--highlight-bg);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* 拖放区域 */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background-color: rgba(86, 119, 252, 0.02);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.drop-zone:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 14px;
+    background: radial-gradient(circle at center, rgba(86, 119, 252, 0.02), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.drop-zone:hover:before {
+    opacity: 1;
+}
+
+.drop-zone:hover {
+    border-color: var(--primary-color);
+    background-color: var(--highlight-bg);
+    transform: scale(1.01);
+}
+
+.drop-zone.highlight {
+    border-color: var(--primary-color);
+    background-color: var(--highlight-bg);
+    transform: scale(1.02);
+    box-shadow: 0 5px 25px rgba(86, 119, 252, 0.15);
+}
+
+/* 转换选项 */
+.conversion-options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .conversion-options {
+        gap: 1rem;
+    }
+    
+    .conversion-option {
+        padding: 1.2rem 0.8rem;
+    }
+    
+    .conversion-option i {
+        font-size: 2.5rem;
+    }
+    
+    .drop-zone {
+        padding: 2rem 1rem;
+    }
+    
+    .btn-primary {
+        padding: 0.6rem 1.5rem;
+    }
+}
+
+/* 头部样式 */
+header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+header .bi {
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
+header:hover .bi {
+    transform: rotate(-10deg);
+}
+
+/* 暗黑模式切换按钮动画 */
+#dark-mode-toggle {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#dark-mode-toggle:hover {
+    background-color: var(--highlight-bg);
+    transform: rotate(30deg);
+}
+
+/* 特性展示区 */
+.feature-box {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    z-index: 1;
+}
+
+.feature-box:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, var(--highlight-bg));
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px var(--shadow-hover);
+}
+
+.feature-box:hover:before {
     opacity: 1;
 } 
