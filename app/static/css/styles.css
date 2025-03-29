@@ -15,17 +15,17 @@
 
 /* 暗色模式 */
 body.dark-mode {
-    --primary-color: #5D8BFF;
-    --primary-hover: #4A7AEE;
-    --bg-color: #121212;
-    --card-bg: #1E1E1E;
-    --text-color: #E0E0E0;
+    --primary-color: #6E8EFF;
+    --primary-hover: #5A7BFF;
+    --bg-color: #0D1117;
+    --card-bg: #161B22;
+    --text-color: #F0F6FC;
     --border-color: rgba(255, 255, 255, 0.1);
-    --highlight-bg: rgba(93, 139, 255, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-    --shadow-hover: rgba(0, 0, 0, 0.3);
-    --secondary-color: #7986CB;
-    --success-color: #66BB6A;
+    --highlight-bg: rgba(110, 142, 255, 0.15);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-hover: rgba(0, 0, 0, 0.4);
+    --secondary-color: #8B9FFF;
+    --success-color: #4ADE80;
 }
 
 /* 全局样式 */
@@ -78,6 +78,7 @@ body.dark-mode .card,
 body.dark-mode .card-header {
     background-color: var(--card-bg);
     color: var(--text-color);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
 body.dark-mode .format-card:hover {
@@ -85,8 +86,8 @@ body.dark-mode .format-card:hover {
 }
 
 body.dark-mode .drop-zone {
-    border-color: rgba(255, 255, 255, 0.15);
-    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(110, 142, 255, 0.03);
 }
 
 body.dark-mode .drop-zone.highlight {
@@ -99,18 +100,39 @@ body.dark-mode .uploaded-file {
 }
 
 body.dark-mode .btn-outline-secondary {
-    color: #adb5bd;
-    border-color: #495057;
+    color: #CBD5E1;
+    border-color: #3B4351;
 }
 
 body.dark-mode .btn-outline-secondary:hover {
-    background-color: #495057;
-    color: #f8f9fa;
+    background-color: #3B4351;
+    color: #F0F6FC;
 }
 
 body.dark-mode .feature-box {
-    background-color: #343a40 !important;
-    color: #f8f9fa;
+    background-color: #21262D !important;
+    color: #F0F6FC;
+}
+
+body.dark-mode .progress {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode #file-info .alert-success {
+    background-color: rgba(74, 222, 128, 0.1);
+    color: #F0F6FC;
+}
+
+body.dark-mode header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 /* 增强的动画效果 */
