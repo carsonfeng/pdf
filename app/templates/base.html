@@ -2,29 +2,39 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}PDF转换工具{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="wechat-enable-text-zoom-em" content="true">
+    <title>{% block title %}CX-PDF{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ range(1, 9999) | random }}">
     <style>
         :root {
-            --primary-color: #4a6bdf;
-            --primary-hover: #3a5bce;
-            --bg-color: #f8f9fa;
+            --primary-color: #1a56db;
+            --primary-hover: #1e429f;
+            --bg-color: #ffffff;
             --card-bg: #ffffff;
-            --text-color: #333333;
+            --text-color: #000000;
+            --accent-color: #0ea5e9;
+            --gradient-start: #1a56db;
+            --gradient-end: #0ea5e9;
+            --border-color: rgba(0, 0, 0, 0.12);
         }
         
         body {
             padding: 20px 0;
-            background-color: var(--bg-color);
+            background-color: #f8fafc;
+            background-image: none;
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            font-weight: 500;
+            letter-spacing: 0.2px;
         }
         
         .container {
@@ -33,24 +43,24 @@
         }
         
         .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
             background-color: var(--card-bg);
             overflow: hidden;
             margin-bottom: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
         
         .card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.15);
         }
         
         .card-header {
             border-radius: 15px 15px 0 0 !important;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #f0f9ff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             padding: 1.2rem 1.5rem;
         }
         
@@ -59,19 +69,38 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: var(--primary-color);
+            border: none;
             border-radius: 8px;
             padding: 0.6rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            color: white;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-hover);
+            z-index: -1;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+        
+        .btn-primary:hover::before {
+            opacity: 1;
         }
         
         .btn-primary:hover, .btn-primary:focus {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-            box-shadow: 0 4px 10px rgba(74, 107, 223, 0.3);
-            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
+            transform: translateY(-2px);
         }
         
         .file-input-container {
@@ -132,7 +161,30 @@
         
         .format-card.selected {
             border-color: var(--primary-color);
-            background-color: rgba(74, 107, 223, 0.05);
+            background-color: #f0f9ff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .format-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .format-card.selected .format-icon {
+            color: var(--primary-color) !important;
         }
         
         .format-icon {
@@ -155,20 +207,19 @@
         
         /* 拖放区域样式 */
         .drop-zone {
-            border: 2px dashed rgba(0, 0, 0, 0.1);
+            border: 2px dashed rgba(0, 0, 0, 0.2);
             border-radius: 12px;
             padding: 30px 20px;
             text-align: center;
             transition: all 0.3s;
             position: relative;
             max-width: 450px;
-            background-color: rgba(0, 0, 0, 0.01);
+            background-color: #f8fafc;
         }
         
         .drop-zone.highlight {
             border-color: var(--primary-color);
-            background-color: rgba(74, 107, 223, 0.05);
-            transform: scale(1.02);
+            background-color: #f0f9ff;
         }
         
         .drop-zone::before {
@@ -195,11 +246,17 @@
                 padding: 10px 0;
             }
             
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+                width: 100%;
+            }
+            
             .card {
                 border-radius: 12px;
-                margin-left: -5px;
-                margin-right: -5px;
-                width: calc(100% + 10px);
+                margin-left: 0;
+                margin-right: 0;
+                width: 100%;
             }
             
             .card-header {
@@ -213,10 +270,17 @@
             .btn-primary {
                 width: 100%;
                 padding: 0.8rem;
+                font-size: 1rem !important;
             }
             
             .format-card {
                 margin-bottom: 10px;
+                padding: 10px 5px;
+            }
+            
+            .format-icon {
+                font-size: 28px;
+                margin-bottom: 5px;
             }
             
             .file-input-container {
@@ -225,73 +289,124 @@
             
             .drop-zone {
                 padding: 20px 15px;
+                max-width: 100%;
+            }
+            
+            .app-title {
+                font-size: 1.5rem;
+            }
+            
+            .header-icon {
+                font-size: 1.8rem;
+            }
+            
+            footer .d-flex {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            footer div:first-child {
+                margin-bottom: 10px;
+            }
+            
+            footer a {
+                display: inline-block;
+                margin-bottom: 8px;
             }
         }
         
         /* 暗黑模式支持 */
         @media (prefers-color-scheme: dark) {
             :root {
-                --primary-color: #5d7ce4;
-                --primary-hover: #4a6bdf;
-                --bg-color: #121212;
-                --card-bg: #1e1e1e;
-                --text-color: #e0e0e0;
+                --primary-color: #60a5fa;
+                --primary-hover: #3b82f6;
+                --bg-color: #f8fafc;
+                --card-bg: #ffffff;
+                --text-color: #000000;
+            }
+            
+            body {
+                background-color: #f8fafc;
             }
             
             .card {
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             }
             
             .card-header {
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                background-color: #f0f9ff;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             }
             
             .format-card:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: rgba(0, 0, 0, 0.03);
             }
             
             .format-card.selected {
-                background-color: rgba(93, 124, 228, 0.15);
+                background-color: #f0f9ff;
+                border-color: var(--primary-color);
             }
             
             .uploaded-file {
-                background-color: rgba(255, 255, 255, 0.08);
+                background-color: #f5f5f5;
             }
             
             .alert-warning {
-                background-color: #332701;
-                border-color: #604c02;
-                color: #ffd66e;
+                background-color: #fff7ed;
+                border-color: #fed7aa;
+                color: #9a3412;
             }
             
             .drop-zone {
-                border-color: rgba(255, 255, 255, 0.1);
-                background-color: rgba(255, 255, 255, 0.02);
+                border-color: rgba(0, 0, 0, 0.2);
+                background-color: #f8fafc;
             }
             
             .drop-zone.highlight {
                 border-color: var(--primary-color);
-                background-color: rgba(93, 124, 228, 0.1);
+                background-color: #f0f9ff;
             }
-            
-            .drop-zone.highlight::before {
-                background: radial-gradient(circle at center, rgba(93, 124, 228, 0.15), rgba(93, 124, 228, 0));
-            }
+        }
+
+        header {
+            position: relative;
+            margin-bottom: 2rem !important;
+            padding-bottom: 1rem !important;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            width: 100%;
+            background: var(--primary-color);
+        }
+
+        .app-title {
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--primary-color);
+            position: relative;
+            font-size: 1.8rem;
+        }
+
+        .header-icon {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
         }
     </style>
     {% block styles %}{% endblock %}
 </head>
 <body>
     <div class="container">
-        <header class="pb-2 mb-3 border-bottom d-flex align-items-center justify-content-between">
+        <header class="pb-2 mb-3 border-bottom d-flex align-items-center justify-content-center">
             <div class="d-flex align-items-center">
-                <i class="bi bi-file-earmark-pdf me-2" style="font-size: 1.8rem; color: var(--primary-color);"></i>
-                <span class="fs-4">PDF转换工具</span>
-            </div>
-            <div>
-                <button id="dark-mode-toggle" class="btn btn-sm btn-outline-secondary" title="切换暗色/亮色模式">
-                    <i class="bi bi-moon"></i>
-                </button>
+                <i class="bi bi-file-earmark-pdf header-icon"></i>
+                <span class="app-title">CX-PDF文件转换助手</span>
             </div>
         </header>
 
@@ -309,11 +424,11 @@
         <footer class="pt-3 mt-4 text-muted border-top text-center">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
-                    <small>&copy; 2025 PDF转换工具</small>
+                    <small>&copy; 2025 CX-PDF文件转换助手</small>
                 </div>
-                <div>
+                <div class="footer-links">
                     <a href="mailto:jiayaf@gmail.com" class="text-muted text-decoration-none me-3">
-                        <small>联系我们: jiayaf@gmail.com</small>
+                        <small>联系我们</small>
                     </a>
                     <a href="#" class="text-muted text-decoration-none me-3">
                         <small>使用条款</small>
