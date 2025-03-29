@@ -2,6 +2,10 @@ import os
 import uuid
 import threading
 import time
+import json
+import datetime
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import (
     Blueprint, flash, redirect, render_template, request, 
     url_for, current_app, send_from_directory, abort, jsonify
@@ -14,6 +18,49 @@ from app.utils import (
 from PyPDF2 import PdfReader
 
 bp = Blueprint('pdf', __name__)
+
+# 设置日志记录器
+def setup_logger():
+    # 确保日志目录存在
+    log_dir = os.path.join(os.path.dirname(current_app.root_path), 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # 统计日志记录器
+    stat_logger = logging.getLogger('pdf_converter_stat')
+    stat_logger.setLevel(logging.INFO)
+    
+    # 创建按大小滚动的文件处理器，单个文件最大10MB，保留30个旧文件
+    stat_handler = RotatingFileHandler(
+        os.path.join(log_dir, 'stat.log'),
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=30
+    )
+    stat_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(message)s'
+    ))
+    stat_logger.addHandler(stat_handler)
+    
+    return stat_logger
+
+# 初始化日志记录器
+stat_logger = None
+
+@bp.before_app_first_request
+def initialize_logger():
+    global stat_logger
+    stat_logger = setup_logger()
+
+def get_client_info():
+    """获取客户端信息"""
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_agent = request.user_agent.string
+    referer = request.referrer or "direct"
+    return {
+        "ip": ip,
+        "user_agent": user_agent,
+        "referer": referer,
+        "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
 
 # 用于跟踪需要清理的文件
 files_to_clean = {}
@@ -41,9 +88,18 @@ def index():
 @bp.route('/upload', methods=['POST'])
 def upload_file():
     """处理文件上传请求"""
+    # 获取客户端信息
+    client_info = get_client_info()
+    
     # 检查是否有文件
     if 'file' not in request.files:
         flash('没有选择文件')
+        if stat_logger:
+            stat_logger.warning(json.dumps({
+                "event": "upload_failed",
+                "reason": "no_file_selected",
+                "client": client_info
+            }))
         return redirect(url_for('pdf.index'))
     
     file = request.files['file']
@@ -51,14 +107,28 @@ def upload_file():
     # 如果用户没有选择文件，浏览器也会提交一个没有文件名的空文件部分
     if file.filename == '':
         flash('没有选择文件')
+        if stat_logger:
+            stat_logger.warning(json.dumps({
+                "event": "upload_failed",
+                "reason": "empty_filename",
+                "client": client_info
+            }))
         return redirect(url_for('pdf.index'))
     
     # 检查文件类型
     if file and allowed_file(file.filename, current_app.config['ALLOWED_EXTENSIONS']):
         # 检查文件大小
         content = file.read()
-        if len(content) > current_app.config['MAX_CONTENT_LENGTH']:
+        file_size = len(content)
+        if file_size > current_app.config['MAX_CONTENT_LENGTH']:
             flash('文件太大，请上传小于16MB的文件')
+            if stat_logger:
+                stat_logger.warning(json.dumps({
+                    "event": "upload_failed",
+                    "reason": "file_too_large",
+                    "file_size": file_size,
+                    "client": client_info
+                }))
             return redirect(url_for('pdf.index'))
         
         # 重置文件指针
@@ -77,6 +147,16 @@ def upload_file():
         # 保存上传的文件
         file.save(file_path)
         
+        # 记录文件上传成功
+        if stat_logger:
+            stat_logger.info(json.dumps({
+                "event": "upload_success",
+                "file_id": unique_id,
+                "original_filename": orig_filename,
+                "file_size": file_size,
+                "client": client_info
+            }))
+        
         # 检查转换类型
         conversion_type = request.form.get('conversion_type', 'word')
         
@@ -90,10 +170,30 @@ def upload_file():
             if total_pages > 0:
                 first_page_text = pdf.pages[0].extract_text()
                 first_page_text = extract_summary(first_page_text, 200)
+                
+            # 记录PDF信息
+            if stat_logger:
+                stat_logger.info(json.dumps({
+                    "event": "pdf_info",
+                    "file_id": unique_id,
+                    "total_pages": total_pages,
+                    "file_size": file_size,
+                    "client": client_info
+                }))
         except Exception as e:
-            print(f"提取PDF信息时出错: {e}")
+            error_message = str(e)
+            print(f"提取PDF信息时出错: {error_message}")
             total_pages = 0
             first_page_text = ""
+            
+            # 记录PDF信息提取错误
+            if stat_logger:
+                stat_logger.error(json.dumps({
+                    "event": "pdf_info_failed",
+                    "file_id": unique_id,
+                    "error": error_message,
+                    "client": client_info
+                }))
         
         # 根据转换类型确定输出扩展名
         output_ext_map = {
@@ -111,17 +211,74 @@ def upload_file():
         # 生成下载文件名（保留原始文件名，更改扩展名）
         download_filename = f"{base_name}{output_ext}"
         
+        # 记录开始转换
+        if stat_logger:
+            stat_logger.info(json.dumps({
+                "event": "conversion_started",
+                "file_id": unique_id,
+                "conversion_type": conversion_type,
+                "original_filename": orig_filename,
+                "client": client_info
+            }))
+        
+        # 开始计时
+        start_time = time.time()
+        
         # 根据转换类型调用适当的转换函数
-        if conversion_type == 'word':
-            output_path = pdf_to_word(file_path, output_path)
-        elif conversion_type == 'excel':
-            output_path = pdf_to_excel(file_path, output_path)
-        elif conversion_type == 'ppt':
-            output_path = pdf_to_ppt(file_path, output_path)
-        elif conversion_type == 'markdown':
-            output_path = pdf_to_markdown(file_path, output_path)
-        else:
-            flash(f'不支持的转换类型: {conversion_type}')
+        try:
+            if conversion_type == 'word':
+                output_path = pdf_to_word(file_path, output_path)
+            elif conversion_type == 'excel':
+                output_path = pdf_to_excel(file_path, output_path)
+            elif conversion_type == 'ppt':
+                output_path = pdf_to_ppt(file_path, output_path)
+            elif conversion_type == 'markdown':
+                output_path = pdf_to_markdown(file_path, output_path)
+            else:
+                flash(f'不支持的转换类型: {conversion_type}')
+                
+                # 记录不支持的转换类型
+                if stat_logger:
+                    stat_logger.error(json.dumps({
+                        "event": "conversion_failed",
+                        "file_id": unique_id,
+                        "error": f"不支持的转换类型: {conversion_type}",
+                        "client": client_info
+                    }))
+                return redirect(url_for('pdf.index'))
+            
+            # 计算转换时间
+            conversion_time = time.time() - start_time
+            
+            # 获取输出文件大小
+            output_size = os.path.getsize(output_path) if os.path.exists(output_path) else 0
+            
+            # 记录转换成功
+            if stat_logger:
+                stat_logger.info(json.dumps({
+                    "event": "conversion_success",
+                    "file_id": unique_id,
+                    "conversion_type": conversion_type,
+                    "original_filename": orig_filename,
+                    "output_size": output_size,
+                    "conversion_time": conversion_time,
+                    "client": client_info
+                }))
+        except Exception as e:
+            error_message = str(e)
+            print(f"文件转换时出错: {error_message}")
+            
+            # 记录转换失败
+            if stat_logger:
+                stat_logger.error(json.dumps({
+                    "event": "conversion_failed",
+                    "file_id": unique_id,
+                    "conversion_type": conversion_type,
+                    "error": error_message,
+                    "client": client_info
+                }))
+            
+            flash(f'文件转换失败: {error_message}')
             return redirect(url_for('pdf.index'))
         
         # 安排上传的原始PDF在转换完成后清理
@@ -137,6 +294,15 @@ def upload_file():
                               total_pages=total_pages,
                               filename=orig_filename,
                               summary=first_page_text))
+    
+    # 不支持的文件类型
+    if stat_logger:
+        stat_logger.warning(json.dumps({
+            "event": "upload_failed",
+            "reason": "unsupported_file_type",
+            "filename": file.filename if file else "unknown",
+            "client": client_info
+        }))
     
     flash('不支持的文件类型，请上传PDF文件')
     return redirect(url_for('pdf.index'))
@@ -159,13 +325,33 @@ def success():
 def download_file(filename):
     """处理文件下载请求"""
     try:
+        # 获取客户端信息
+        client_info = get_client_info()
+        
         # 检查文件是否存在
         file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         if not os.path.exists(file_path):
+            if stat_logger:
+                stat_logger.error(json.dumps({
+                    "event": "download_failed",
+                    "filename": filename,
+                    "reason": "file_not_found",
+                    "client": client_info
+                }))
             abort(404)
             
         original_filename = request.args.get('original_filename', filename)
         
+        # 记录下载成功
+        if stat_logger:
+            stat_logger.info(json.dumps({
+                "event": "download_started",
+                "filename": filename,
+                "original_filename": original_filename,
+                "file_size": os.path.getsize(file_path),
+                "client": client_info
+            }))
+            
         # 安排在文件下载后30分钟删除
         schedule_file_cleanup(file_path, 1800)  # 30分钟
         
@@ -174,84 +360,13 @@ def download_file(filename):
                                   as_attachment=True,
                                   download_name=original_filename)
     except Exception as e:
-        flash(f'下载文件时出错: {str(e)}')
+        error_message = str(e)
+        if stat_logger:
+            stat_logger.error(json.dumps({
+                "event": "download_failed",
+                "filename": filename,
+                "error": error_message,
+                "client": client_info
+            }))
+        flash(f'下载文件时出错: {error_message}')
         return redirect(url_for('pdf.index'))
-
-# 新增API路由：获取PDF信息
-@bp.route('/api/pdf-info', methods=['POST'])
-def get_pdf_info():
-    """返回PDF文件的基本信息，如页数、大小等"""
-    if 'file' not in request.files:
-        return jsonify({'error': '未找到文件'}), 400
-    
-    file = request.files['file']
-    
-    if file.filename == '':
-        return jsonify({'error': '未选择文件'}), 400
-    
-    if file and allowed_file(file.filename, current_app.config['ALLOWED_EXTENSIONS']):
-        try:
-            # 读取文件内容
-            content = file.read()
-            file_size = len(content)
-            
-            if file_size > current_app.config['MAX_CONTENT_LENGTH']:
-                return jsonify({'error': '文件太大，请上传小于16MB的文件'}), 400
-            
-            # 创建临时文件
-            temp_file_path = os.path.join(
-                current_app.config['UPLOAD_FOLDER'], 
-                f"temp_{str(uuid.uuid4())}.pdf"
-            )
-            
-            # 保存临时文件
-            with open(temp_file_path, 'wb') as f:
-                f.write(content)
-            
-            # 读取PDF信息
-            pdf = PdfReader(temp_file_path)
-            total_pages = len(pdf.pages)
-            
-            # 提取第一页文本作为摘要
-            summary = ""
-            if total_pages > 0:
-                summary = pdf.pages[0].extract_text()
-                summary = extract_summary(summary, 200)
-            
-            # 删除临时文件
-            os.remove(temp_file_path)
-            
-            # 返回信息
-            return jsonify({
-                'success': True,
-                'filename': file.filename,
-                'size': file_size,
-                'size_formatted': f"{file_size/1024/1024:.2f} MB" if file_size > 1024*1024 else f"{file_size/1024:.2f} KB",
-                'pages': total_pages,
-                'summary': summary
-            })
-        except Exception as e:
-            # 确保临时文件被删除
-            if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-            return jsonify({'error': f'处理PDF时出错: {str(e)}'}), 500
-    
-    return jsonify({'error': '不支持的文件类型'}), 400
-
-@bp.errorhandler(413)
-def request_entity_too_large(error):
-    """处理文件过大错误"""
-    flash('文件太大，请上传小于16MB的文件')
-    return redirect(url_for('pdf.index')), 413
-
-@bp.errorhandler(404)
-def not_found(error):
-    """处理404错误"""
-    flash('请求的资源不存在')
-    return redirect(url_for('pdf.index')), 404
-
-@bp.errorhandler(500)
-def internal_server_error(error):
-    """处理500错误"""
-    flash('服务器内部错误，请稍后再试')
-    return redirect(url_for('pdf.index')), 500
