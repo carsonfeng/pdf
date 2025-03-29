@@ -69,7 +69,7 @@ body {
     padding: 2rem;
 }
 
-/* 暗黑模式具体元素样式覆盖 - 新增 */
+/* 暗黑模式具体元素样式覆盖 - 修正冲突 */
 body.dark-mode h1,
 body.dark-mode h2,
 body.dark-mode h3,
@@ -90,12 +90,14 @@ body.dark-mode .card-header {
     border-color: rgba(255, 255, 255, 0.05);
 }
 
-body.dark-mode .conversion-option {
+body.dark-mode .conversion-option,
+body.dark-mode .format-card {
     color: var(--text-color);
     background-color: var(--card-bg);
 }
 
-body.dark-mode .format-card:hover {
+body.dark-mode .format-card:hover,
+body.dark-mode .conversion-option:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -147,6 +149,19 @@ body.dark-mode header {
 
 body.dark-mode footer {
     border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 强制覆盖内联样式 */
+body.dark-mode .text-muted {
+    color: #CBD5E1 !important;
+}
+
+body.dark-mode .border-bottom {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .border-top {
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* 增强的动画效果 */
@@ -249,7 +264,8 @@ body.dark-mode .feature-box:hover {
     margin: 2.5rem 0;
 }
 
-.conversion-option {
+.conversion-option,
+.format-card {
     flex: 1;
     min-width: 130px;
     max-width: 200px;
@@ -265,7 +281,8 @@ body.dark-mode .feature-box:hover {
     overflow: hidden;
 }
 
-.conversion-option:before {
+.conversion-option:before,
+.format-card:before {
     content: "";
     position: absolute;
     top: -10px;
@@ -278,23 +295,28 @@ body.dark-mode .feature-box:hover {
     z-index: 0;
 }
 
-.conversion-option:hover:before {
+.conversion-option:hover:before,
+.format-card:hover:before {
     opacity: 1;
 }
 
-.conversion-option:hover {
+.conversion-option:hover,
+.format-card:hover {
     border-color: var(--primary-color);
     transform: translateY(-5px);
     box-shadow: 0 10px 20px var(--shadow-hover);
 }
 
-.conversion-option.selected {
+.conversion-option.selected,
+.format-card.selected {
     border-color: var(--primary-color);
     background-color: var(--highlight-bg);
     box-shadow: 0 8px 25px rgba(86, 119, 252, 0.2);
 }
 
-.conversion-option i {
+.conversion-option i,
+.format-card i,
+.format-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
     color: var(--primary-color);
@@ -303,7 +325,9 @@ body.dark-mode .feature-box:hover {
     transition: all 0.3s ease;
 }
 
-.conversion-option:hover i {
+.conversion-option:hover i,
+.format-card:hover i,
+.format-card:hover .format-icon {
     transform: scale(1.1);
 }
 
@@ -447,7 +471,7 @@ footer:hover {
     box-shadow: 0 5px 25px rgba(86, 119, 252, 0.15);
 }
 
-/* 转换选项 */
+/* 转换选项 - 修正各种选择器冲突 */
 .conversion-options {
     display: flex;
     justify-content: center;
